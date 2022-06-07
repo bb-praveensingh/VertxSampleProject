@@ -1,0 +1,112 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    // Apply the application plugin to add support for building a CLI application.
+    id 'application'
+    id 'jacoco'
+    id "org.sonarqube" version "2.7"
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+def vertxVersion = '4.2.0'
+version = '0.0.1-SNAPSHOT'
+mainClassName = 'com.bigbasket.core.controller.VertxLauncher'
+//mainClassName = 'io.vertx.core.Launcher'
+def mainVerticleName = 'com.vertx.sample.MainVerticle'
+def watchForChange = 'src/**/*'
+def doOnChange = 'gradle classes'
+dependencies {
+    implementation 'com.bigbasket:vertx-core:v0.1.68'
+    implementation "io.vertx:vertx-kafka-client:$vertxVersion"
+    // This dependency is used by the application.
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.11.0'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.11.0'
+    compile "io.vertx:vertx-core:$vertxVersion"
+    compile "io.vertx:vertx-web:$vertxVersion"
+    compile "io.vertx:vertx-config:$vertxVersion"
+    compile "io.vertx:vertx-rx-java2:$vertxVersion"
+    compile "io.vertx:vertx-web-client:$vertxVersion"
+    compile "io.vertx:vertx-kafka-client:$vertxVersion"
+    compile "io.vertx:vertx-mysql-client:$vertxVersion"
+    compile "io.vertx:vertx-service-proxy:$vertxVersion"
+    compile "io.vertx:vertx-codegen:$vertxVersion"
+    compile "com.aerospike:aerospike-client:4.4.7"
+    compile "io.vertx:vertx-web-api-contract:$vertxVersion"
+
+    // JOOQ
+    implementation "org.jooq:jooq:3.13.5"
+    implementation "org.jooq:jooq-codegen:3.13.5"
+    implementation "org.jooq:jooq:3.13.5"
+
+    annotationProcessor "io.vertx:vertx-service-proxy:4.2.3"
+    annotationProcessor "io.vertx:vertx-codegen:$vertxVersion:processor"
+
+    // Metrics
+    compile "io.vertx:vertx-micrometer-metrics:$vertxVersion"
+    compile "io.micrometer:micrometer-registry-prometheus:1.2.0"
+//	compile "ch.qos.logback:logback-classic:1.2.3"
+//	compile "net.logstash.logback:logstash-logback-encoder:5.3"
+    compile "io.opentracing:opentracing-api:0.33.0"
+    compile 'io.opentracing.contrib:opentracing-metrics-micrometer:0.3.0'
+    compile 'io.jaegertracing:jaeger-client:1.1.0'
+    compile 'com.newrelic.agent.java:newrelic-api:5.8.0'
+    compile 'io.swagger.core.v3:swagger-annotations:2.0.0'
+    compile 'io.swagger.core.v3:swagger-core:2.0.0'
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.13.0'
+    // cron
+    compile "org.quartz-scheduler:quartz:2.2.1"
+
+    // lombok annotations
+    compileOnly "org.projectlombok:lombok:1.18.16"
+    annotationProcessor "org.projectlombok:lombok:1.18.16"
+
+//	implementation 'io.zipkin.reporter2:zipkin-sender-okhttp3:2.7.8'
+//	implementation 'io.opentracing.brave:brave-opentracing:0.33.0'
+    // Use JUnit test framework
+    testImplementation "io.vertx:vertx-junit5:$vertxVersion"
+    testImplementation 'org.mockito:mockito-core:3.2.0'
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.6.2"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+    testImplementation 'org.assertj:assertj-core:3.8.0'
+    testImplementation "org.testcontainers:mysql:1.15.1"
+    testImplementation "org.testcontainers:testcontainers:1.15.1"
+    testImplementation 'mysql:mysql-connector-java:8.0.21'
+    testImplementation "io.vertx:vertx-junit5-rx-java2:$vertxVersion"
+
+    // use dagger for di
+    implementation 'com.google.dagger:dagger:2.25.4'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.25.4'
+    testAnnotationProcessor 'com.google.dagger:dagger-compiler:2.25.4'
+
+    implementation 'org.xerial.snappy:snappy-java:1.1.8.4'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task dependencyJar(type: Jar) {
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    archiveFileName = "dependency.jar"
+}
+
+/*run {
+    args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
+}*/
+
+run{
+    args=['run',mainVerticleName,
+          '-Dvertx.disableDnsResolver=true',
+          '--java-opts="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"',
+          "--redeploy=$watchForChange","--launcher-class=$mainClassName","--on-redeploy=$doOnChange",]
+}
